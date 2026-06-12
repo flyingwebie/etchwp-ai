@@ -38,3 +38,8 @@ create→empty hint. IMMEDIATE persistence. 70 tests green.
 etch_loops_read (get_all, fuzzy find) + etch_loops_write (add/update/delete/set_for_block;
 update full-replacement teaching error; open-ended WP query args; $param ?? default mini-language
 documented in descriptions). pageDirty. 74 tests green.
+
+## [2026-06-12] F8: Fields domain — built
+etch_fields_read (list_groups/get_group/get_values/get_value) + etch_fields_write (9 actions;
+full-replacement teaching errors on update_group/update_field; open CustomFieldType; numeric
+postId validation). IMMEDIATE persistence. 76 tests green.
