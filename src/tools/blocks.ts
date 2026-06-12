@@ -68,7 +68,7 @@ function rejectStylesArray(node: unknown, path = "json"): void {
   }
   const children = obj.children;
   if (Array.isArray(children)) {
-    children.forEach((c, i) => rejectStylesArray(c, `${path}.children[${i}]`));
+    for (const [i, c] of children.entries()) rejectStylesArray(c, `${path}.children[${i}]`);
   }
 }
 

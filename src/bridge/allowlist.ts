@@ -96,7 +96,7 @@ export const ETCH_ALLOWLIST: Readonly<Record<string, readonly string[]>> = Objec
 
 export function assertAllowed(domain: string, method: string): void {
   const methods = Object.hasOwn(ETCH_ALLOWLIST, domain) ? ETCH_ALLOWLIST[domain] : undefined;
-  if (!methods || !methods.includes(method)) {
+  if (!methods?.includes(method)) {
     throw toolError("E_VALIDATION", `'${domain}.${method}' is not a documented Etch API operation`);
   }
 }

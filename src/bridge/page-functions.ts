@@ -55,8 +55,7 @@ export const READ_ROOT_VARIABLES = () => {
     for (const rule of Array.from(rules)) {
       const styleRule = rule as CSSStyleRule;
       if (
-        !styleRule.selectorText ||
-        !styleRule.selectorText.split(",").some((s) => s.trim() === ":root")
+        !styleRule.selectorText?.split(",").some((s) => s.trim() === ":root")
       )
         continue;
       for (const prop of Array.from(styleRule.style)) {

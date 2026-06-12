@@ -11,7 +11,7 @@ describe("filterByHint", () => {
 
   test("case-insensitive substring match", () => {
     const tabs = [tab("https://Staging.Example.com/?etch=editor"), tab("https://other.com/page")];
-    expect(filterByHint(tabs, "staging.example")).toEqual([tabs[0]!]);
+    expect(filterByHint(tabs, "staging.example")).toEqual([tabs[0] as ReturnType<typeof tab>]);
   });
 });
 
