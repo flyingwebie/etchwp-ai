@@ -10,6 +10,7 @@ import { registerInsertPatternTool } from "./tools/insert-pattern.ts";
 import { registerLoopTools } from "./tools/loops.ts";
 import { registerNavTools } from "./tools/nav.ts";
 import { registerScreenshotTool } from "./tools/screenshot.ts";
+import { registerSidecarTools } from "./tools/sidecar.ts";
 import { registerStatusTools, resetFeatureCache } from "./tools/status.ts";
 import { registerStyleTools } from "./tools/styles.ts";
 import { registerStylesheetTools } from "./tools/stylesheets.ts";
@@ -17,9 +18,11 @@ import { registerStylesheetTools } from "./tools/stylesheets.ts";
 export interface ServerDeps {
   bridge: EtchBridge;
   config: Config;
+  /** Injectable for tests; defaults to global fetch. */
+  fetchImpl?: typeof fetch;
 }
 
-export function buildServerWithCtx({ bridge, config }: ServerDeps): {
+export function buildServerWithCtx({ bridge, config, fetchImpl }: ServerDeps): {
   server: McpServer;
   ctx: ToolContext;
 } {
@@ -54,6 +57,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
   registerNavTools(server, ctx);
   registerScreenshotTool(server, ctx);
   registerInsertPatternTool(server, ctx);
+  registerSidecarTools(server, ctx, fetchImpl ?? fetch);
   return { server, ctx };
 }
 

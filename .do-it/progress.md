@@ -75,3 +75,9 @@ blocks.create per root → getJson to resolve nested ids by path → addClass at
 {createdRootBlockIds, createdStyles, attachments, unstyledClasses, skipped}; E_PATTERN_PARTIAL on
 mid-failure with completed-steps detail + rollback remediation; zero bridge calls on invalid input.
 100 tests green.
+
+## [2026-06-12] F12: WP REST sidecar — built
+wp_content (list_posts/list_pages, page/per_page/search) + wp_media (upload base64 → {id,url} w/
+mediaId hint, list). UNREGISTERED without the WP_* env trio; Basic auth app password; 401/403 →
+E_SIDECAR_AUTH; credential-hygiene test asserts password absent from output+logs. Injectable
+fetch for tests. 104 tests green.
