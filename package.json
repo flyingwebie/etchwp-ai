@@ -4,9 +4,29 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@biomejs/biome": "^2.4.16",
+    "@types/bun": "latest",
+    "@types/css-tree": "^2.3.11"
   },
   "peerDependencies": {
-    "typescript": "^5"
-  }
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@digital-gravy/etch-public-api": "^0.3.4",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "css-tree": "^3.2.1",
+    "htmlparser2": "^12.0.0",
+    "playwright-core": "^1.60.0",
+    "zod": "^4.4.3"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "test": "bun test",
+    "dev": "bun --hot src/index.ts",
+    "build": "bun build src/index.ts --target=node --outdir dist"
+  },
+  "license": "MIT",
+  "version": "0.1.0",
+  "description": "MCP server that drives the Etch for WordPress builder via CDP (window.etch Public API)"
 }
