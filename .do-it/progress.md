@@ -28,3 +28,8 @@ ACSS_VARIABLE_PREFIXES = namespace display metadata only). Fixture partition tes
 ## [2026-06-12] F5: Stylesheets domain — built
 etch_stylesheets_read (list/get/list_custom_media) + etch_stylesheets_write (create/update/append/
 delete/add_custom_media; IMMEDIATE persistence, never dirty). 66 tests green.
+
+## [2026-06-12] F6: Components domain — built
+etch_components_read/write — numeric-id validation teaching errors, update = partial patch with
+properties/blocks wholesale-replacement warning hint, reserved number-primitive property rejected,
+create→empty hint. IMMEDIATE persistence. 70 tests green.
