@@ -1,6 +1,5 @@
 {
   "name": "etchwp-ai",
-  "module": "index.ts",
   "type": "module",
   "private": false,
   "devDependencies": {
