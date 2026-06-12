@@ -166,9 +166,9 @@ export function registerNavTools(server: McpServer, ctx: ToolContext): void {
     server,
     ctx,
     "etch_history",
-    "Undo/redo — the SAME stack as the builder UI; scripted mutations land on it automatically, and undo/redo do NOT adjust the dirty counters (they count AI-initiated calls, a lower bound). Actions: undo, redo (void — guard with can_undo/can_redo, there is no success signal), can_undo, can_redo. checkpoint/rollback for batch safety live here too once available.",
+    "Undo/redo — the SAME stack as the builder UI; scripted mutations land on it automatically, and undo/redo do NOT adjust the dirty counters (they count AI-initiated calls, a lower bound). Actions: undo, redo (void — guard with can_undo/can_redo, there is no success signal), can_undo, can_redo, checkpoint (record a marker before a risky batch), rollback (undo every AI mutation since the checkpoint — BEST-EFFORT: manual edits made in the builder meanwhile share the stack and get reverted too; immediate-persistence writes (stylesheets/components/fields) are counted but their post-undo persisted state is undocumented upstream).",
     {
-      action: z.enum(["undo", "redo", "can_undo", "can_redo"]),
+      action: z.enum(["undo", "redo", "can_undo", "can_redo", "checkpoint", "rollback"]),
     },
     async (args) => {
       switch (args.action) {
@@ -189,6 +189,54 @@ export function registerNavTools(server: McpServer, ctx: ToolContext): void {
           return envelope(ctx, await runRead(ctx, "history", "canUndo"));
         case "can_redo":
           return envelope(ctx, await runRead(ctx, "history", "canRedo"));
+        case "checkpoint": {
+          ctx.checkpointAt = ctx.mutations.value();
+          return envelope(
+            ctx,
+            { checkpoint: ctx.checkpointAt },
+            {
+              hint: "Marker recorded. etch_history rollback will undo every AI mutation made after this point.",
+            },
+          );
+        }
+        case "rollback": {
+          if (ctx.checkpointAt === null) {
+            throw toolError(
+              "E_VALIDATION",
+              "No checkpoint recorded — call etch_history checkpoint before the batch you may want to roll back.",
+            );
+          }
+          const requested = ctx.mutations.since(ctx.checkpointAt);
+          const immediates = [...new Set(ctx.mutations.immediateSince(ctx.checkpointAt))];
+          let performed = 0;
+          let stoppedBecause: string | null = null;
+          for (let i = 0; i < requested; i++) {
+            const can = await runRead(ctx, "history", "canUndo");
+            if (can !== true) {
+              stoppedBecause = "undo_stack_exhausted";
+              break;
+            }
+            await runWrite(ctx, "history", "undo", [], { dirty: null, countMutation: false });
+            performed += 1;
+          }
+          ctx.checkpointAt = null;
+          return envelope(
+            ctx,
+            {
+              requested,
+              performed,
+              stoppedBecause,
+              immediateDomainsSinceCheckpoint: immediates,
+            },
+            {
+              hint:
+                (immediates.length
+                  ? `Immediate-persistence domains (${immediates.join(", ")}) were mutated since the checkpoint — their persisted state after undo is UNDOCUMENTED upstream; verify in the builder. `
+                  : "") +
+                "Manual edits made in the builder during the batch share the undo stack and were reverted too. Dirty counters are NOT adjusted by rollback.",
+            },
+          );
+        }
         default:
           throw toolError("E_VALIDATION", `unknown action '${String(args.action)}'`);
       }

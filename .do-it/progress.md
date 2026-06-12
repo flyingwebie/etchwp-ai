@@ -56,3 +56,9 @@ etch_screenshot: MCP image content; PNG IHDR dimension parse (no image lib) → 
 via CDP Emulation.setDeviceMetricsOverride when longest edge >1600px; JPEG q70 fallback when
 payload >800KB (E_READ_TOO_LARGE if still over); hide_chrome wraps capture in set_interface_hidden;
 canvas mode ships viewport fallback noted (selector = open Q4). 88 tests green.
+
+## [2026-06-12] F11: Checkpoint/rollback — built
+etch_history gains checkpoint (records MutationCounter value) + rollback (undo-N with canUndo
+guard each step; {requested, performed, stoppedBecause}; immediate-domain writes since checkpoint
+listed with undocumented-undo warning; best-effort semantics in description). undo/redo/ui-chrome/
+nav/save excluded from MutationCounter. 91 tests green.

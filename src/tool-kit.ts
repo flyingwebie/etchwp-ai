@@ -12,6 +12,8 @@ export interface ToolContext {
   mutations: MutationCounter;
   /** Server-tracked component-edit-mode flag (set by enter/exit actions; manual UI changes are not observable). */
   componentEditMode: boolean;
+  /** MutationCounter value recorded by etch_history checkpoint (null = none). */
+  checkpointAt: number | null;
   /** Lazily attaches the bridge on first use so the server starts without Chrome. */
   ensureAttached(): Promise<void>;
   log(level: "info" | "warn" | "error", message: string): void;

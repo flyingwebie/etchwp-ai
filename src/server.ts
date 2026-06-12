@@ -30,6 +30,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
     dirty: new DirtyTracker(),
     mutations: new MutationCounter(),
     componentEditMode: false,
+    checkpointAt: null,
     async ensureAttached() {
       if (attached && bridge.session().state === "attached") return;
       await bridge.attach();
