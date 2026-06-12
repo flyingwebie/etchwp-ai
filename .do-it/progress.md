@@ -17,3 +17,10 @@ EtchBlockJson w/ recursive styles+id rejection teaching errors, update=BlockPatc
 add/remove_class via styleId, mode-aware dirty: doc mutations → componentEditDirty inside edit
 mode, revert-exit clears it, save_component_edit persists definition). ctx.componentEditMode
 server-tracked. 58 tests green.
+
+## [2026-06-12] F4: Styles + tokens — built
+etch_styles_read/write (rules CRUD + variables; create hints add_class wiring; pageDirty),
+etch_tokens (merge listVariables [etch] + readRootVariables [computed], dedupe etch-wins,
+ORIGIN-based acss classification via ETCH_ACSS_STYLESHEET_PATTERN — survives renamed palettes;
+ACSS_VARIABLE_PREFIXES = namespace display metadata only). Fixture partition test covers renamed
+--action-* family and colliding --text-brand user var. 64 tests green.

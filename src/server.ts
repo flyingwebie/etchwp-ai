@@ -5,6 +5,7 @@ import { DirtyTracker, MutationCounter } from "./state/dirty.ts";
 import type { ToolContext } from "./tool-kit.ts";
 import { registerBlockTools } from "./tools/blocks.ts";
 import { registerStatusTools, resetFeatureCache } from "./tools/status.ts";
+import { registerStyleTools } from "./tools/styles.ts";
 
 export interface ServerDeps {
   bridge: EtchBridge;
@@ -37,6 +38,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
   const server = new McpServer({ name: "etchwp-ai", version: "0.1.0" });
   registerStatusTools(server, ctx);
   registerBlockTools(server, ctx);
+  registerStyleTools(server, ctx);
   return { server, ctx };
 }
 

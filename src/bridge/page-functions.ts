@@ -54,10 +54,7 @@ export const READ_ROOT_VARIABLES = () => {
     }
     for (const rule of Array.from(rules)) {
       const styleRule = rule as CSSStyleRule;
-      if (
-        !styleRule.selectorText?.split(",").some((s) => s.trim() === ":root")
-      )
-        continue;
+      if (!styleRule.selectorText?.split(",").some((s) => s.trim() === ":root")) continue;
       for (const prop of Array.from(styleRule.style)) {
         if (!prop.startsWith("--")) continue;
         const key = `${prop}@@${sheet.href ?? ""}`;
