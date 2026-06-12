@@ -42,4 +42,6 @@ export interface EtchBridge {
   session(): Readonly<BridgeSession>;
   /** True exactly once after an unexpected (non-nav-tool) document reload. */
   takeReloadFlag(): boolean;
+  /** Wrap a navigation-triggering call so its reload is not flagged as unexpected. */
+  expectNavigation?<T>(fn: () => Promise<T>): Promise<T>;
 }

@@ -43,3 +43,10 @@ documented in descriptions). pageDirty. 74 tests green.
 etch_fields_read (list_groups/get_group/get_values/get_value) + etch_fields_write (9 actions;
 full-replacement teaching errors on update_group/update_field; open CustomFieldType; numeric
 postId validation). IMMEDIATE persistence. 76 tests green.
+
+## [2026-06-12] F9: Navigation, UI chrome + history — built
+etch_nav (8 actions; E_UNSAVED_CHANGES dirty guard + discard:true on open_post/open_template/go_to;
+expectNavigation suppresses false E_SESSION_RELOADED; exit_to_wordpress confirm-gated, detaches;
+getActivePostId/isEditingTemplate consumed by etch_status per grill C24), etch_ui (6 chrome actions,
+local-ui, non-dirty), etch_history (undo/redo/can_undo/can_redo; no dirty adjustment — lower-bound
+semantics; excluded from MutationCounter via countMutation:false). 83 tests green.

@@ -36,7 +36,10 @@ export function registerComponentTools(server: McpServer, ctx: ToolContext): voi
     "Read Etch components. Actions: list (summaries — no block trees), get_json (summary + blocks, by NUMERIC componentId).",
     {
       action: z.enum(["list", "get_json"]),
-      componentId: z.number().int().optional().describe("get_json: numeric component id"),
+      componentId: z
+        .unknown()
+        .optional()
+        .describe("get_json: NUMERIC component id (component ids are numbers, not strings)"),
     },
     async (args) => {
       switch (args.action) {
@@ -60,7 +63,10 @@ export function registerComponentTools(server: McpServer, ctx: ToolContext): voi
     "Mutate Etch components. Persistence is IMMEDIATE (no etch_save needed). Component ids are NUMBERS. Actions: create {name} (creates an EMPTY component — populate via update with blocks, or enter_component_edit on an etch/component block); update (PARTIAL patch: name?/key?/description? — but properties and blocks, when supplied, REPLACE WHOLESALE, they are never merged; key is auto-PascalCased); delete. Number-primitive properties are reserved/unimplemented upstream and rejected here.",
     {
       action: z.enum(["create", "update", "delete"]),
-      componentId: z.number().int().optional(),
+      componentId: z
+        .unknown()
+        .optional()
+        .describe("NUMERIC component id (component ids are numbers, not strings)"),
       name: z.string().optional(),
       patch: z
         .record(z.string(), z.unknown())
@@ -80,7 +86,7 @@ export function registerComponentTools(server: McpServer, ctx: ToolContext): voi
           const id = await runWrite(ctx, "components", "createAsync", [name], { dirty: null });
           return envelope(ctx, id, {
             ...immediate,
-            hint: "Created an EMPTY component. Add properties/blocks via update, or insert an etch/component block and use etch_blocks_write enter_component_edit.",
+            hint: "Created an empty component. Add properties/blocks via update, or insert an etch/component block and use etch_blocks_write enter_component_edit.",
           });
         }
         case "update": {

@@ -103,13 +103,13 @@ export async function runWrite(
   domain: string,
   method: string,
   args: unknown[],
-  opts: { dirty: DirtyDomain | null; mutationDomain?: string },
+  opts: { dirty: DirtyDomain | null; mutationDomain?: string; countMutation?: boolean },
 ): Promise<unknown> {
   await ctx.ensureAttached();
   try {
     const value = await ctx.bridge.eval(domain, method, args);
     if (opts.dirty) ctx.dirty.mark(opts.dirty);
-    ctx.mutations.increment(opts.mutationDomain ?? domain);
+    if (opts.countMutation !== false) ctx.mutations.increment(opts.mutationDomain ?? domain);
     return value;
   } catch (e) {
     const code = (e as { code?: string })?.code;

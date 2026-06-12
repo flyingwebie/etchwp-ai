@@ -55,7 +55,7 @@ export function registerStatusTools(server: McpServer, ctx: ToolContext): void {
     {},
     async () => {
       const { runWrite } = await import("../tool-kit.ts");
-      await runWrite(ctx, "root", "saveAsync", [], { dirty: null, mutationDomain: "save" });
+      await runWrite(ctx, "root", "saveAsync", [], { dirty: null, countMutation: false });
       ctx.dirty.clearPage();
       const snap = ctx.dirty.snapshot();
       return envelope(

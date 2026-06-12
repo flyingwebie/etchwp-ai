@@ -29,6 +29,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  */
 export class MockBridge implements EtchBridge {
   available = true;
+  /** Test knob: set true to make nav-handler-triggered reloads count as unexpected. */
+  unexpectedNav = false;
+  private expecting = false;
   readonly calls: Array<{ domain: string; method: string; args: unknown[] }> = [];
 
   private handlers = new Map<string, Handler>();
@@ -66,7 +69,16 @@ export class MockBridge implements EtchBridge {
 
   simulateNavigation(opts: { expected?: boolean } = {}): void {
     this.state.epoch += 1;
-    if (!opts.expected) this.reloadFlag = true;
+    if (!(opts.expected || this.expecting)) this.reloadFlag = true;
+  }
+
+  async expectNavigation<T>(fn: () => Promise<T>): Promise<T> {
+    this.expecting = true;
+    try {
+      return await fn();
+    } finally {
+      this.expecting = false;
+    }
   }
 
   takeReloadFlag(): boolean {
