@@ -50,3 +50,9 @@ expectNavigation suppresses false E_SESSION_RELOADED; exit_to_wordpress confirm-
 getActivePostId/isEditingTemplate consumed by etch_status per grill C24), etch_ui (6 chrome actions,
 local-ui, non-dirty), etch_history (undo/redo/can_undo/can_redo; no dirty adjustment — lower-bound
 semantics; excluded from MutationCounter via countMutation:false). 83 tests green.
+
+## [2026-06-12] F10: Screenshot — built
+etch_screenshot: MCP image content; PNG IHDR dimension parse (no image lib) → scaled recapture
+via CDP Emulation.setDeviceMetricsOverride when longest edge >1600px; JPEG q70 fallback when
+payload >800KB (E_READ_TOO_LARGE if still over); hide_chrome wraps capture in set_interface_hidden;
+canvas mode ships viewport fallback noted (selector = open Q4). 88 tests green.

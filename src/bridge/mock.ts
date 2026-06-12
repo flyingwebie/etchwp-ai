@@ -31,6 +31,10 @@ export class MockBridge implements EtchBridge {
   available = true;
   /** Test knob: set true to make nav-handler-triggered reloads count as unexpected. */
   unexpectedNav = false;
+  /** Test knob: per-call screenshot bytes. */
+  screenshotImpl: ((opts?: ScreenshotOptions) => Uint8Array) | null = null;
+  /** Test knob: make screenshot() throw E_DETACHED. */
+  failScreenshots = false;
   private expecting = false;
   readonly calls: Array<{ domain: string; method: string; args: unknown[] }> = [];
 
@@ -135,7 +139,11 @@ export class MockBridge implements EtchBridge {
     return this.opts.rootVariables ?? [];
   }
 
-  async screenshot(_opts?: ScreenshotOptions): Promise<Uint8Array> {
+  async screenshot(opts?: ScreenshotOptions): Promise<Uint8Array> {
+    if (this.failScreenshots || this.state.state !== "attached") {
+      throw toolError("E_DETACHED");
+    }
+    if (this.screenshotImpl) return this.screenshotImpl(opts);
     return this.opts.screenshotBytes ?? new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
   }
 

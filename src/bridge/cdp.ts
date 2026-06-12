@@ -185,7 +185,34 @@ export class CdpBridge implements EtchBridge {
 
   async screenshot(opts?: ScreenshotOptions): Promise<Uint8Array> {
     return this.queue.run("screenshot", async () => {
-      const buf = await this.alivePage().screenshot({ type: "png", clip: opts?.clip });
+      const page = this.alivePage();
+      const scale = opts?.scaleFactor;
+      if (scale && scale > 0 && scale < 1 && this.cdp) {
+        const vp = page.viewportSize();
+        if (vp) {
+          await this.cdp.send("Emulation.setDeviceMetricsOverride", {
+            width: vp.width,
+            height: vp.height,
+            deviceScaleFactor: scale,
+            mobile: false,
+          });
+          try {
+            const buf = await page.screenshot({
+              type: opts?.format ?? "png",
+              quality: opts?.format === "jpeg" ? (opts?.quality ?? 70) : undefined,
+              clip: opts?.clip,
+            });
+            return new Uint8Array(buf);
+          } finally {
+            await this.cdp.send("Emulation.clearDeviceMetricsOverride").catch(() => {});
+          }
+        }
+      }
+      const buf = await page.screenshot({
+        type: opts?.format ?? "png",
+        quality: opts?.format === "jpeg" ? (opts?.quality ?? 70) : undefined,
+        clip: opts?.clip,
+      });
       return new Uint8Array(buf);
     });
   }

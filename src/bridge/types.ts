@@ -19,6 +19,10 @@ export interface BridgeSession {
 
 export interface ScreenshotOptions {
   clip?: { x: number; y: number; width: number; height: number };
+  /** Downscale factor applied via CDP device-metrics override (0 < f <= 1). */
+  scaleFactor?: number;
+  format?: "png" | "jpeg";
+  quality?: number;
 }
 
 /**
