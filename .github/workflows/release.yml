@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  pack-test:
+    strategy:
+      matrix:
+        node-version: ["20.x", "22.x"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run build
+      - name: Pack, install tarball in temp dir, handshake over stdio
+        run: |
+          npm pack
+          TARBALL="$(ls etchwp-ai-*.tgz)"
+          mkdir -p /tmp/pack-test && cp "$TARBALL" scripts/handshake-test.mjs /tmp/pack-test/
+          cd /tmp/pack-test
+          npm init -y >/dev/null
+          npm install "./$TARBALL"
+          node handshake-test.mjs node_modules/etchwp-ai/dist/index.js
+
+  publish:
+    needs: pack-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          registry-url: "https://registry.npmjs.org"
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

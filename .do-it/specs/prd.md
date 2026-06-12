@@ -54,7 +54,7 @@ Etch is a modern WordPress page builder with a Public API — but that API exist
 
 ### 1.2 Product Vision
 
-`etchwp-ai` is a public, npm-distributed MCP server that attaches to the user's own Chrome tab via the Chrome DevTools Protocol and exposes the full Etch Public API as 23 well-schematized MCP tools. Any MCP-capable AI client — Claude (Desktop/Code), OpenAI (Agents SDK / Responses API), OpenCode, Cursor — can then read the block tree, create and style blocks, manage components, loops, fields, and stylesheets, see what it built via screenshots, and persist explicitly. v1 reads live design tokens by merging Etch's variable registry with a fixed read-only `:root` snapshot of the page (covering ACSS and any other plugin/theme tokens, classified by stylesheet origin); full ACSS-opinionated generation/validation is v2.
+`etchwp-ai` is a public, npm-distributed MCP server that attaches to the user's own Chrome tab via the Chrome DevTools Protocol and exposes the full Etch Public API as 22 well-schematized MCP tools (20 core + 2 optional sidecar). Any MCP-capable AI client — Claude (Desktop/Code), OpenAI (Agents SDK / Responses API), OpenCode, Cursor — can then read the block tree, create and style blocks, manage components, loops, fields, and stylesheets, see what it built via screenshots, and persist explicitly. v1 reads live design tokens by merging Etch's variable registry with a fixed read-only `:root` snapshot of the page (covering ACSS and any other plugin/theme tokens, classified by stylesheet origin); full ACSS-opinionated generation/validation is v2.
 
 ### 1.3 Target Audience
 
@@ -163,7 +163,7 @@ Acceptance criteria live per-feature in §7.1 (single source of truth — `/do-i
 ```mermaid
 graph TD
     A[AI client: Claude / OpenAI / OpenCode] -- MCP stdio --> B[etchwp-ai server -- Bun/Node]
-    B --> C[Tool layer: 23 zod-schematized tools]
+    B --> C[Tool layer: 22 zod-schematized tools]
     C --> D[EtchBridge interface]
     D --> E[CDP transport: playwright-core connectOverCDP localhost:9222]
     E --> F[User's Chrome tab: Etch builder, window.etch]
@@ -223,7 +223,7 @@ Etch domain types come from `@digital-gravy/etch-public-api` + `.do-it/research/
 | `wp_media` | sidecar | upload, list | WP REST |
 | `wp_content` | sidecar | list_posts, list_pages (paginated) | WP REST |
 
-23 tools (sidecar tools are **absent from `tools/list`** when sidecar env vars are unset).
+22 tools — 20 core + 2 sidecar (sidecar tools are **absent from `tools/list`** when sidecar env vars are unset).
 
 Schema constraints (CI-linted, see F14a): no `oneOf`/`anyOf`/`allOf` at parameter top level, nesting depth ≤ 5 — keeps schemas OpenAI-compatible. `find` predicates are presence-only for class/attribute (no value matching) — stated in the description. `etch/raw-html` blocks: reads return sanitized `content` by default, original `unsafe` only with `include_unsafe: true`; `etch_insert_pattern` never emits `etch/raw-html`.
 
@@ -269,7 +269,7 @@ F1–F10, F14a, F14b (bridge, server, all 9 API domains incl. `etch_ui`, screens
 3. **Coverage.** Every documented `0.x` operation (including all 7 `etch.ui` ops) is callable through a tool action; the generated coverage table (F14b) maps op → tool/action with zero unmapped rows, CI-checked.
 4. Mock-bridge test suite green (`bun test`); typecheck green; Biome lint green.
 5. Graceful degradation verified by tests: Chrome absent → `E_NO_CHROME`; tab absent → `E_NO_TAB`; multiple tabs → `E_MULTIPLE_TABS`; Etch absent → `E_NO_ETCH`; missing API method → `E_FEATURE_MISSING`. Server stays alive in all cases.
-6. **Release gates.** (a) CI release job (Node 20.x + 22.x matrix): `npm pack`, install tarball in temp dir, spawn bin over stdio, assert successful MCP initialize handshake and `tools/list` containing the 21 core tools (sidecar excluded without env). (b) Claude Code verified per 6.3-1; Claude Desktop config verified on the same machine with a record in the repo. OpenCode + OpenAI Agents SDK configs ship in the README as documented best-effort.
+6. **Release gates.** (a) CI release job (Node 20.x + 22.x matrix): `npm pack`, install tarball in temp dir, spawn bin over stdio, assert successful MCP initialize handshake and `tools/list` containing the 20 core tools (sidecar excluded without env). (b) Claude Code verified per 6.3-1; Claude Desktop config verified on the same machine with a record in the repo. OpenCode + OpenAI Agents SDK configs ship in the README as documented best-effort.
 
 ---
 
@@ -442,7 +442,7 @@ F1–F10, F14a, F14b (bridge, server, all 9 API domains incl. `etch_ui`, screens
 - **What** — npm distribution + release CI.
 - **Acceptance**
   - `bun build --target=node` produces a single-entry dist; bin wired in package.json; `npx etchwp-ai` smoke-tested on Node ≥ 20.
-  - CI release job (Node 20.x + 22.x matrix): `npm pack` → install tarball in temp dir → spawn bin over stdio → assert MCP initialize handshake + `tools/list` with the 21 core tools (per §6.3-6a).
+  - CI release job (Node 20.x + 22.x matrix): `npm pack` → install tarball in temp dir → spawn bin over stdio → assert MCP initialize handshake + `tools/list` with the 20 core tools (per §6.3-6a).
   - Schema-lint step: every tool schema checked against the §4.4 constraints (no top-level unions, depth ≤ 5).
   - Publish-on-tag workflow with npm provenance (§8.2); publish dry-run on PRs touching package.json (§9.2).
 - **Out of scope** — README content (F14b).

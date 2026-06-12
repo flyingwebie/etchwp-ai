@@ -204,11 +204,7 @@ export function registerBlockTools(server: McpServer, ctx: ToolContext): void {
         .describe("create/replace: EtchBlockJson authoring shape (no id, no styles)"),
       parentId: z.string().optional().describe("create: parent block id (omit = document root)"),
       index: z.number().int().optional(),
-      newParentId: z
-        .string()
-        .nullable()
-        .optional()
-        .describe("move: null re-parents to document root"),
+      newParentId: z.string().optional().describe("move: omit to re-parent to the document root"),
       patch: z
         .record(z.string(), z.unknown())
         .optional()

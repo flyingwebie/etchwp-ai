@@ -81,3 +81,11 @@ wp_content (list_posts/list_pages, page/per_page/search) + wp_media (upload base
 mediaId hint, list). UNREGISTERED without the WP_* env trio; Basic auth app password; 401/403 →
 E_SIDECAR_AUTH; credential-hygiene test asserts password absent from output+logs. Injectable
 fetch for tests. 104 tests green.
+
+## [2026-06-12] F14a: Packaging + release — built
+bun build --target=node --packages external → dist/index.js (shebang intact, 88KB);
+bin etchwp-ai, files dist+README+LICENSE (MIT), engines node>=20. Local smoke: real stdio
+handshake → initialize + tools/list = 20 core tools ✓. Release workflow: tag → Node 20/22 matrix
+npm pack + tarball install + handshake → npm publish --provenance. CI publish dry-run on PRs.
+Schema-lint test: 20/22 tool count, no top-level unions (fixed newParentId anyOf), depth ≤5.
+106 tests green. Q1 npm name free; Q8 license = MIT (decision recorded).

@@ -2,7 +2,7 @@
   "name": "etchwp-ai",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "private": false,
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
     "@types/bun": "latest",
@@ -24,9 +24,32 @@
     "lint": "biome check .",
     "test": "bun test",
     "dev": "bun --hot src/index.ts",
-    "build": "bun build src/index.ts --target=node --outdir dist"
+    "build": "bun build src/index.ts --target=node --outdir dist --packages external"
   },
   "license": "MIT",
   "version": "0.1.0",
-  "description": "MCP server that drives the Etch for WordPress builder via CDP (window.etch Public API)"
+  "description": "MCP server that drives the Etch for WordPress builder via CDP (window.etch Public API)",
+  "bin": {
+    "etchwp-ai": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flyingweb/etchwp-ai.git"
+  },
+  "keywords": [
+    "etch",
+    "wordpress",
+    "mcp",
+    "automaticcss",
+    "ai"
+  ]
 }
