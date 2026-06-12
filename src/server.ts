@@ -5,6 +5,7 @@ import { DirtyTracker, MutationCounter } from "./state/dirty.ts";
 import type { ToolContext } from "./tool-kit.ts";
 import { registerBlockTools } from "./tools/blocks.ts";
 import { registerComponentTools } from "./tools/components.ts";
+import { registerLoopTools } from "./tools/loops.ts";
 import { registerStatusTools, resetFeatureCache } from "./tools/status.ts";
 import { registerStyleTools } from "./tools/styles.ts";
 import { registerStylesheetTools } from "./tools/stylesheets.ts";
@@ -43,6 +44,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
   registerStyleTools(server, ctx);
   registerStylesheetTools(server, ctx);
   registerComponentTools(server, ctx);
+  registerLoopTools(server, ctx);
   return { server, ctx };
 }
 

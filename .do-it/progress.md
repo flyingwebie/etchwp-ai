@@ -33,3 +33,8 @@ delete/add_custom_media; IMMEDIATE persistence, never dirty). 66 tests green.
 etch_components_read/write — numeric-id validation teaching errors, update = partial patch with
 properties/blocks wholesale-replacement warning hint, reserved number-primitive property rejected,
 create→empty hint. IMMEDIATE persistence. 70 tests green.
+
+## [2026-06-12] F7: Loops domain — built
+etch_loops_read (get_all, fuzzy find) + etch_loops_write (add/update/delete/set_for_block;
+update full-replacement teaching error; open-ended WP query args; $param ?? default mini-language
+documented in descriptions). pageDirty. 74 tests green.
