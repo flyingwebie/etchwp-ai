@@ -62,3 +62,9 @@ etch_history gains checkpoint (records MutationCounter value) + rollback (undo-N
 guard each step; {requested, performed, stoppedBecause}; immediate-domain writes since checkpoint
 listed with undocumented-undo warning; best-effort semantics in description). undo/redo/ui-chrome/
 nav/save excluded from MutationCounter. 91 tests green.
+
+## [2026-06-12] F13a: Pattern transform engine — built
+transformPattern(html, css) → InsertionPlan {blocks (EtchBlockJson tree), styles, attachments
+(blockPath→className), skipped}. htmlparser2 + css-tree, local validation (E_VALIDATION before any
+mutation), classes stripped→attachments, raw-html never emitted, script/style/svg/comments skipped
++ reported, duplicate selectors merged, empty-value declarations rejected. 96 tests green.
