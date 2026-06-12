@@ -68,3 +68,10 @@ transformPattern(html, css) → InsertionPlan {blocks (EtchBlockJson tree), styl
 (blockPath→className), skipped}. htmlparser2 + css-tree, local validation (E_VALIDATION before any
 mutation), classes stripped→attachments, raw-html never emitted, script/style/svg/comments skipped
 + reported, duplicate selectors merged, empty-value declarations rejected. 96 tests green.
+
+## [2026-06-12] F13b: Pattern orchestration — built
+etch_insert_pattern: transform → auto checkpoint → styles.create (capture ids) → nested
+blocks.create per root → getJson to resolve nested ids by path → addClass attachments. Manifest
+{createdRootBlockIds, createdStyles, attachments, unstyledClasses, skipped}; E_PATTERN_PARTIAL on
+mid-failure with completed-steps detail + rollback remediation; zero bridge calls on invalid input.
+100 tests green.

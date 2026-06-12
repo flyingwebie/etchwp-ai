@@ -6,6 +6,7 @@ import type { ToolContext } from "./tool-kit.ts";
 import { registerBlockTools } from "./tools/blocks.ts";
 import { registerComponentTools } from "./tools/components.ts";
 import { registerFieldTools } from "./tools/fields.ts";
+import { registerInsertPatternTool } from "./tools/insert-pattern.ts";
 import { registerLoopTools } from "./tools/loops.ts";
 import { registerNavTools } from "./tools/nav.ts";
 import { registerScreenshotTool } from "./tools/screenshot.ts";
@@ -52,6 +53,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
   registerFieldTools(server, ctx);
   registerNavTools(server, ctx);
   registerScreenshotTool(server, ctx);
+  registerInsertPatternTool(server, ctx);
   return { server, ctx };
 }
 

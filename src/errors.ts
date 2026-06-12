@@ -27,6 +27,8 @@ export const ERROR_REMEDIATIONS: Record<string, string> = {
   E_FEATURE_MISSING:
     "This Etch install does not expose that API method (the 0.x contract varies). Check etch_status.featureMap for what is available.",
   E_VALIDATION: "The input was rejected before reaching Etch. Fix the arguments per the message.",
+  E_PATTERN_PARTIAL:
+    "Pattern insertion stopped mid-way leaving a partial subtree in the buffer. Run etch_history rollback to revert to the auto checkpoint, or finish manually.",
   E_READ_TOO_LARGE:
     "The response exceeds ETCH_MAX_READ_BYTES. Re-run with depth or mode: 'summary' for a smaller view, or raise the limit.",
   E_SIDECAR_DISABLED:
