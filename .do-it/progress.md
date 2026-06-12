@@ -24,3 +24,7 @@ etch_tokens (merge listVariables [etch] + readRootVariables [computed], dedupe e
 ORIGIN-based acss classification via ETCH_ACSS_STYLESHEET_PATTERN — survives renamed palettes;
 ACSS_VARIABLE_PREFIXES = namespace display metadata only). Fixture partition test covers renamed
 --action-* family and colliding --text-brand user var. 64 tests green.
+
+## [2026-06-12] F5: Stylesheets domain — built
+etch_stylesheets_read (list/get/list_custom_media) + etch_stylesheets_write (create/update/append/
+delete/add_custom_media; IMMEDIATE persistence, never dirty). 66 tests green.

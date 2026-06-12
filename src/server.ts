@@ -6,6 +6,7 @@ import type { ToolContext } from "./tool-kit.ts";
 import { registerBlockTools } from "./tools/blocks.ts";
 import { registerStatusTools, resetFeatureCache } from "./tools/status.ts";
 import { registerStyleTools } from "./tools/styles.ts";
+import { registerStylesheetTools } from "./tools/stylesheets.ts";
 
 export interface ServerDeps {
   bridge: EtchBridge;
@@ -39,6 +40,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
   registerStatusTools(server, ctx);
   registerBlockTools(server, ctx);
   registerStyleTools(server, ctx);
+  registerStylesheetTools(server, ctx);
   return { server, ctx };
 }
 
