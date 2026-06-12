@@ -27,6 +27,8 @@ export const ERROR_REMEDIATIONS: Record<string, string> = {
   E_FEATURE_MISSING:
     "This Etch install does not expose that API method (the 0.x contract varies). Check etch_status.featureMap for what is available.",
   E_VALIDATION: "The input was rejected before reaching Etch. Fix the arguments per the message.",
+  E_READ_TOO_LARGE:
+    "The response exceeds ETCH_MAX_READ_BYTES. Re-run with depth or mode: 'summary' for a smaller view, or raise the limit.",
   E_SIDECAR_DISABLED:
     "The WP REST sidecar is not configured. Set WP_BASE_URL, WP_APP_USER, and WP_APP_PASSWORD (application password) to enable wp_media/wp_content.",
   E_SIDECAR_AUTH:

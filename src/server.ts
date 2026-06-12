@@ -3,6 +3,7 @@ import type { EtchBridge } from "./bridge/types.ts";
 import type { Config } from "./config.ts";
 import { DirtyTracker, MutationCounter } from "./state/dirty.ts";
 import type { ToolContext } from "./tool-kit.ts";
+import { registerBlockTools } from "./tools/blocks.ts";
 import { registerStatusTools, resetFeatureCache } from "./tools/status.ts";
 
 export interface ServerDeps {
@@ -21,6 +22,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
     config,
     dirty: new DirtyTracker(),
     mutations: new MutationCounter(),
+    componentEditMode: false,
     async ensureAttached() {
       if (attached && bridge.session().state === "attached") return;
       await bridge.attach();
@@ -34,6 +36,7 @@ export function buildServerWithCtx({ bridge, config }: ServerDeps): {
 
   const server = new McpServer({ name: "etchwp-ai", version: "0.1.0" });
   registerStatusTools(server, ctx);
+  registerBlockTools(server, ctx);
   return { server, ctx };
 }
 

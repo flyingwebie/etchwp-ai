@@ -9,3 +9,11 @@ McpServer + ToolContext (lazy attach), §4.4 envelope + error table, etch_status
 reload-exempt), etch_save (clears pageDirty only, hints componentEditDirty), split DirtyTracker +
 MutationCounter, E_SESSION_RELOADED once-semantics, stderr-only logging + dirty disconnect warning,
 CI workflow (test/typecheck/lint on PR). 44 tests green.
+
+## [2026-06-12] F3: Blocks domain — built
+etch_blocks_read (7 actions; depth/summary post-processing, E_READ_TOO_LARGE size guard,
+raw-html unsafe stripped unless include_unsafe) + etch_blocks_write (17 actions; create/replace
+EtchBlockJson w/ recursive styles+id rejection teaching errors, update=BlockPatch merge-only,
+add/remove_class via styleId, mode-aware dirty: doc mutations → componentEditDirty inside edit
+mode, revert-exit clears it, save_component_edit persists definition). ctx.componentEditMode
+server-tracked. 58 tests green.
