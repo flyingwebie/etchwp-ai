@@ -42,7 +42,10 @@ export function buildServerWithCtx({ bridge, config, fetchImpl }: ServerDeps): {
     },
     log(level, message) {
       // stdout is the MCP protocol channel — all logging goes to stderr.
-      console.error(`[etchwp-ai] ${level}: ${message}`);
+      const order: Record<string, number> = { error: 0, warn: 1, info: 2 };
+      if ((order[level] ?? 2) <= (order[config.logLevel] ?? 2)) {
+        console.error(`[etchwp-ai] ${level}: ${message}`);
+      }
     },
   };
 

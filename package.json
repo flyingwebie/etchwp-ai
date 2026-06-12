@@ -4,14 +4,13 @@
   "private": false,
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
+    "@digital-gravy/etch-public-api": "^0.3.4",
     "@types/bun": "latest",
-    "@types/css-tree": "^2.3.11"
-  },
-  "peerDependencies": {
+    "@types/css-tree": "^2.3.11",
+    "domhandler": "^6.0.1",
     "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@digital-gravy/etch-public-api": "^0.3.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "css-tree": "^3.2.1",
     "htmlparser2": "^12.0.0",
@@ -23,7 +22,8 @@
     "lint": "biome check .",
     "test": "bun test",
     "dev": "bun --hot src/index.ts",
-    "build": "bun build src/index.ts --target=node --outdir dist --packages external"
+    "build": "bun build src/index.ts --target=node --outdir dist --packages external",
+    "prepublishOnly": "bun run build"
   },
   "license": "MIT",
   "version": "0.1.0",

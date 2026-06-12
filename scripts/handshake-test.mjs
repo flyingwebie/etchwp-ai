@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Release-gate smoke test (PRD §6.3-6a): spawn the packaged bin over stdio,
- * perform an MCP initialize handshake and a tools/list, assert the 21 core
+ * perform an MCP initialize handshake and a tools/list, assert the 20 core
  * tools are present (sidecar excluded — no WP_* env). Plain Node, no SDK.
  *
  * Usage: node scripts/handshake-test.mjs <path-to-bin.js>
