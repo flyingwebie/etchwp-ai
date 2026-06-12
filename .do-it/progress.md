@@ -89,3 +89,16 @@ handshake → initialize + tools/list = 20 core tools ✓. Release workflow: tag
 npm pack + tarball install + handshake → npm publish --provenance. CI publish dry-run on PRs.
 Schema-lint test: 20/22 tool count, no top-level unions (fixed newParentId anyOf), depth ≤5.
 106 tests green. Q1 npm name free; Q8 license = MIT (decision recorded).
+
+## [2026-06-12] F14b: Docs + coverage — built
+README (per-OS Chrome setup, 4 client configs, canonical verification prompt + pass checks,
+security notes, 16-row troubleshooting matrix = one per error code, config reference). Ops manifest
+(src/ops-manifest.ts) maps all 85 documented ops → tool/action; coverage gate test (zero unmapped,
+no phantom rows); docs/coverage.md generated. docs/verification.md tracks live gates: CI handshake
+✅ automated, timed onboarding + Claude Desktop + canonical demo ⏳ PENDING (need live WP+Etch —
+cannot be fabricated). 108 tests green.
+
+## [2026-06-12] v1 feature train COMPLETE
+F1–F14b all built + archived. 108 tests, typecheck + biome clean, build + stdio handshake verified
+locally (20 tools). Remaining before npm tag: live-install gates in docs/verification.md, Q5
+(save_component_edit interplay) live check, repo URL confirm, branches unmerged per auto_merge:false.
