@@ -23,6 +23,7 @@
     "test": "bun test",
     "dev": "bun --hot src/index.ts",
     "build": "bun build src/index.ts --target=node --outdir dist --packages external",
+    "export:tokens": "bun run scripts/export-tokens.ts",
     "prepublishOnly": "bun run build"
   },
   "license": "MIT",

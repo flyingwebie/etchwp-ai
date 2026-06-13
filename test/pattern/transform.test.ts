@@ -70,4 +70,32 @@ describe("transformPattern", () => {
       expect.objectContaining({ code: "E_VALIDATION" }),
     );
   });
+
+  test("clean tokenized + BEM pattern yields empty findings (additive, non-breaking)", () => {
+    const plan = transformPattern(
+      `<section class="hero"><h2 class="hero__title">Hi</h2></section>`,
+      `.hero { background: var(--bg-dark); padding: var(--space-l); }
+       .hero__title { color: var(--primary); }`,
+    );
+    expect(plan.bemFindings).toEqual([]);
+    expect(plan.tokenFindings).toEqual([]);
+  });
+
+  test("hardcoded values and bad BEM populate findings", () => {
+    const plan = transformPattern(
+      `<section class="Hero"><h2 class="hero__title--big">Hi</h2></section>`,
+      `.Hero { padding: 20px; color: #ff0000; }`,
+    );
+    const bemClasses = plan.bemFindings.map((f) => f.className);
+    expect(bemClasses).toContain("Hero");
+    const token = plan.tokenFindings.find((f) => f.property === "padding");
+    expect(token).toMatchObject({ selector: ".Hero", family: "spacing", value: "20px" });
+    expect(token?.suggestion).toContain("--space");
+    expect(plan.tokenFindings.some((f) => f.kind === "color")).toBe(true);
+  });
+
+  test("findings dedupe a class repeated across elements", () => {
+    const plan = transformPattern(`<div class="Bad"><span class="Bad">x</span></div>`, "");
+    expect(plan.bemFindings.filter((f) => f.className === "Bad")).toHaveLength(1);
+  });
 });

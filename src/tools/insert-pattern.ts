@@ -1,7 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { buildValueIndex, classifyTokens, normalizeValue } from "../acss/classify.ts";
 import { toolError } from "../errors.ts";
-import { type InsertionPlan, transformPattern } from "../pattern/transform.ts";
+import {
+  type InsertionPlan,
+  type TokenPlanFinding,
+  transformPattern,
+} from "../pattern/transform.ts";
 import { envelope, registerTool, runRead, runWrite, type ToolContext } from "../tool-kit.ts";
 
 interface CreatedTree {
@@ -17,14 +22,67 @@ function idAtPath(root: CreatedTree, path: number[]): string | null {
   return node?.id ?? null;
 }
 
+/** Rank exact token candidates so names matching the finding's family come first. */
+function familyAffinity(name: string, family: string): number {
+  switch (family) {
+    case "spacing":
+    case "gap":
+      return /^--(space|section-space|grid-gap|gutter|content-gap|gap)\b/.test(name) ? 0 : 1;
+    case "font-size":
+      return /^--(text|h[1-6])\b/.test(name) ? 0 : 1;
+    case "radius":
+      return /^--(radius|card-radius|btn-radius)\b/.test(name) ? 0 : 1;
+    case "width":
+      return /^--(content-width|width-)/.test(name) ? 0 : 1;
+    case "border":
+      return /^--border\b/.test(name) ? 0 : 1;
+    case "shadow":
+      return /^--(box-shadow|card-shadow)/.test(name) ? 0 : 1;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Best-effort: upgrade family-level token findings to EXACT `resolvedTokens`
+ * using the live `:root` snapshot. Reads only — never mutates. The caller wraps
+ * this so a bridge failure degrades to the static (family-level) suggestion.
+ */
+async function enrichWithLiveTokens(
+  ctx: ToolContext,
+  findings: TokenPlanFinding[],
+): Promise<TokenPlanFinding[]> {
+  await ctx.ensureAttached();
+  const registry = ((await runRead(ctx, "styles", "listVariables")) ?? {}) as Record<
+    string,
+    string
+  >;
+  const computed = await ctx.bridge.readRootVariables();
+  const index = buildValueIndex(
+    classifyTokens(computed, registry, ctx.config.acssStylesheetPattern),
+  );
+  return findings.map((f) => {
+    const matches = index.get(normalizeValue(f.value));
+    if (!matches?.length) return f;
+    const resolvedTokens = [...matches].sort(
+      (a, b) => familyAffinity(a, f.family) - familyAffinity(b, f.family),
+    );
+    return { ...f, resolvedTokens };
+  });
+}
+
 export function registerInsertPatternTool(server: McpServer, ctx: ToolContext): void {
   registerTool(
     server,
     ctx,
     "etch_insert_pattern",
-    "Build a whole section in one call: takes semantic HTML + CSS, decomposes them into an Etch block tree (etch/element + etch/text; script/style/svg dropped and reported; raw-html never emitted), creates each CSS rule via styles.create, and attaches classes to blocks via add_class — the only legal way (the styles array is read-only). BUFFERED: call etch_save after. Input is validated locally first; invalid HTML/CSS fails with E_VALIDATION and ZERO mutations. An undo checkpoint is recorded automatically; on mid-orchestration failure the error recommends etch_history rollback. Use real tokens from etch_tokens in the CSS.",
+    "Build a whole section in one call: takes semantic HTML + CSS, decomposes them into an Etch block tree (etch/element + etch/text; script/style/svg dropped and reported; raw-html never emitted), creates each CSS rule via styles.create, and attaches classes to blocks via add_class — the only legal way (the styles array is read-only). BUFFERED: call etch_save after. Input is validated locally first; invalid HTML/CSS fails with E_VALIDATION and ZERO mutations. ACSS/BEM enforcement is active (ETCH_ENFORCE_TOKENS / ETCH_BEM_LINT = off|warn|reject, default warn): hardcoded colors/lengths and BEM violations are reported in the manifest (bemFindings/tokenFindings, with exact token suggestions from the live page) and, when mode=reject, fail with E_ACSS_ENFORCEMENT and ZERO mutations. An undo checkpoint is recorded automatically; on mid-orchestration failure the error recommends etch_history rollback. Use real tokens from etch_tokens in the CSS.",
     {
-      html: z.string().describe("semantic HTML (BEM classes recommended)"),
+      html: z
+        .string()
+        .describe(
+          "semantic HTML — BEM classes REQUIRED (block__element--modifier, lowercase-kebab, no grandchild nesting); no ACSS utility classes in markup",
+        ),
       css: z
         .string()
         .default("")
@@ -35,6 +93,43 @@ export function registerInsertPatternTool(server: McpServer, ctx: ToolContext): 
     async (args) => {
       // 1. Pure transform — throws E_VALIDATION before any bridge call.
       const plan: InsertionPlan = transformPattern(String(args.html ?? ""), String(args.css ?? ""));
+
+      // 1a. ACSS/BEM enforcement gate — PURE, before any bridge call. In reject
+      //     mode a violation fails with E_ACSS_ENFORCEMENT and ZERO mutations.
+      const { enforceTokens, bemLint } = ctx.config;
+      const rejectBem = bemLint === "reject" && plan.bemFindings.length > 0;
+      const rejectTokens = enforceTokens === "reject" && plan.tokenFindings.length > 0;
+      if (rejectBem || rejectTokens) {
+        const parts: string[] = [];
+        if (rejectBem) {
+          parts.push(
+            `${plan.bemFindings.length} BEM violation(s): ${plan.bemFindings
+              .slice(0, 3)
+              .map((f) => `'${f.className}' [${f.violations.join(", ")}]`)
+              .join("; ")}`,
+          );
+        }
+        if (rejectTokens) {
+          parts.push(
+            `${plan.tokenFindings.length} hardcoded value(s): ${plan.tokenFindings
+              .slice(0, 3)
+              .map((f) => `${f.selector} { ${f.property}: ${f.value} } — ${f.suggestion}`)
+              .join("; ")}`,
+          );
+        }
+        throw toolError("E_ACSS_ENFORCEMENT", parts.join(" | "));
+      }
+
+      // 1b. Warn-mode reporting (+ best-effort live exact-token suggestions).
+      const reportBem = bemLint === "warn" ? plan.bemFindings : [];
+      let reportTokens = enforceTokens === "warn" ? plan.tokenFindings : [];
+      if (reportTokens.length > 0) {
+        try {
+          reportTokens = await enrichWithLiveTokens(ctx, reportTokens);
+        } catch {
+          // Bridge read failed — keep the static family-level suggestions.
+        }
+      }
 
       // 2. Auto checkpoint for rollback on partial failure.
       ctx.checkpointAt = ctx.mutations.value();
@@ -93,6 +188,9 @@ export function registerInsertPatternTool(server: McpServer, ctx: ToolContext): 
           step(`blocks.addClass ${blockId} ${att.className}`);
         }
 
+        const warnings = reportBem.length + reportTokens.length;
+        const baseHint =
+          "Pattern inserted into the buffer — call etch_save to persist. A checkpoint was recorded; etch_history rollback reverts the whole insertion.";
         return envelope(
           ctx,
           {
@@ -101,10 +199,16 @@ export function registerInsertPatternTool(server: McpServer, ctx: ToolContext): 
             attachments,
             unstyledClasses: [...new Set(unstyledClasses)],
             skipped: plan.skipped,
+            bemFindings: reportBem,
+            tokenFindings: reportTokens,
+            enforcement: { tokens: enforceTokens, bem: bemLint },
           },
           {
             persistence: "buffered",
-            hint: "Pattern inserted into the buffer — call etch_save to persist. A checkpoint was recorded; etch_history rollback reverts the whole insertion.",
+            hint:
+              warnings > 0
+                ? `${baseHint} ${warnings} ACSS/BEM warning(s) — see bemFindings/tokenFindings.`
+                : baseHint,
           },
         );
       } catch (e) {

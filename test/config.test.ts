@@ -13,6 +13,16 @@ describe("config", () => {
       true,
     );
     expect(c.acssStylesheetPattern.test("/themes/mytheme/style.css")).toBe(false);
+    expect(c.enforceTokens).toBe("warn");
+    expect(c.bemLint).toBe("warn");
+  });
+
+  test("enforcement modes from env (invalid falls back to default)", () => {
+    const c = loadConfig({ ETCH_ENFORCE_TOKENS: "reject", ETCH_BEM_LINT: "off" });
+    expect(c.enforceTokens).toBe("reject");
+    expect(c.bemLint).toBe("off");
+    const bad = loadConfig({ ETCH_ENFORCE_TOKENS: "loud" });
+    expect(bad.enforceTokens).toBe("warn");
   });
 
   test("env overrides", () => {

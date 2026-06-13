@@ -1,6 +1,14 @@
 import * as csstree from "css-tree";
 import type { ChildNode, Element } from "domhandler";
 import { parseDocument } from "htmlparser2";
+import {
+  type BemFinding,
+  familySuggestion,
+  findHardcodedValues,
+  type HardcodedKind,
+  lintBem,
+} from "../acss/lint.ts";
+import type { PropertyFamily } from "../acss/tokens.ts";
 import { toolError } from "../errors.ts";
 
 export interface PlannedStyle {
@@ -19,11 +27,31 @@ export interface SkippedNode {
   reason: string;
 }
 
+/** A BEM-naming violation found on a class in the markup (one per unique class). */
+export type BemPlanFinding = BemFinding;
+
+/** A hardcoded value found in the CSS that should be an ACSS token. The static
+ * `suggestion` is family-level; the tool layer may add exact `resolvedTokens`. */
+export interface TokenPlanFinding {
+  selector: string;
+  property: string;
+  value: string;
+  kind: HardcodedKind;
+  family: PropertyFamily;
+  suggestion: string;
+  /** Exact token candidates from live tokens — populated at the tool layer only. */
+  resolvedTokens?: string[];
+}
+
 export interface InsertionPlan {
   blocks: Record<string, unknown>[];
   styles: PlannedStyle[];
   attachments: PlannedAttachment[];
   skipped: SkippedNode[];
+  /** ACSS/BEM lint findings — ALWAYS present (empty when clean). Modes (warn/reject)
+   * are applied at the tool layer; the transform stays pure and only reports. */
+  bemFindings: BemPlanFinding[];
+  tokenFindings: TokenPlanFinding[];
 }
 
 const SKIP_TAGS = new Set(["script", "style", "svg", "iframe", "object", "embed"]);
@@ -37,6 +65,7 @@ function transformElement(
   path: number[],
   attachments: PlannedAttachment[],
   skipped: SkippedNode[],
+  bemFindings: BemPlanFinding[],
 ): Record<string, unknown> | null {
   const tag = el.name.toLowerCase();
   if (SKIP_TAGS.has(tag)) {
@@ -54,10 +83,18 @@ function transformElement(
   const classNames = (el.attribs?.class ?? "").split(/\s+/).filter(Boolean);
   for (const className of classNames) {
     attachments.push({ blockPath: [...path], className });
+    const finding = lintBem(className);
+    if (finding) bemFindings.push(finding);
   }
   const children: Record<string, unknown>[] = [];
   for (const child of el.children as ChildNode[]) {
-    const built = transformNode(child, [...path, children.length], attachments, skipped);
+    const built = transformNode(
+      child,
+      [...path, children.length],
+      attachments,
+      skipped,
+      bemFindings,
+    );
     if (built) children.push(built);
   }
   return {
@@ -75,6 +112,7 @@ function transformNode(
   path: number[],
   attachments: PlannedAttachment[],
   skipped: SkippedNode[],
+  bemFindings: BemPlanFinding[],
 ): Record<string, unknown> | null {
   if (node.type === "text") {
     const text = (node as unknown as { data: string }).data.replace(/\s+/g, " ").trim();
@@ -85,12 +123,12 @@ function transformNode(
     return null;
   }
   if (node.type === "tag" || node.type === "script" || node.type === "style") {
-    return transformElement(node as Element, path, attachments, skipped);
+    return transformElement(node as Element, path, attachments, skipped, bemFindings);
   }
   return null;
 }
 
-function transformCss(css: string): PlannedStyle[] {
+function transformCss(css: string, tokenFindings: TokenPlanFinding[]): PlannedStyle[] {
   if (!css.trim()) return [];
   let ast: csstree.CssNode;
   try {
@@ -123,6 +161,16 @@ function transformCss(css: string): PlannedStyle[] {
             `CSS declaration '${d.property}' in '${selector}' has no value. Fix the stylesheet — no mutations were issued.`,
           );
         }
+        for (const f of findHardcodedValues(d.property, value)) {
+          tokenFindings.push({
+            selector,
+            property: f.property,
+            value: f.value,
+            kind: f.kind,
+            family: f.family,
+            suggestion: familySuggestion(f.family),
+          });
+        }
         declarations.push(generated);
       });
       const existing = bySelector.get(selector) ?? [];
@@ -144,10 +192,12 @@ function transformCss(css: string): PlannedStyle[] {
 export function transformPattern(html: string, css: string): InsertionPlan {
   const attachments: PlannedAttachment[] = [];
   const skipped: SkippedNode[] = [];
+  const bemRaw: BemPlanFinding[] = [];
+  const tokenFindings: TokenPlanFinding[] = [];
   const doc = parseDocument(html ?? "", { lowerCaseTags: true });
   const blocks: Record<string, unknown>[] = [];
   for (const child of doc.children as ChildNode[]) {
-    const built = transformNode(child, [blocks.length], attachments, skipped);
+    const built = transformNode(child, [blocks.length], attachments, skipped, bemRaw);
     if (built) blocks.push(built);
   }
   if (!blocks.length) {
@@ -156,5 +206,15 @@ export function transformPattern(html: string, css: string): InsertionPlan {
       "No representable elements found in the HTML — nothing to insert (text-only or empty input).",
     );
   }
-  return { blocks, styles: transformCss(css ?? ""), attachments, skipped };
+  // Dedupe BEM findings by class name (a class can appear on many elements).
+  const seen = new Set<string>();
+  const bemFindings = bemRaw.filter((f) => !seen.has(f.className) && seen.add(f.className));
+  return {
+    blocks,
+    styles: transformCss(css ?? "", tokenFindings),
+    attachments,
+    skipped,
+    bemFindings,
+    tokenFindings,
+  };
 }

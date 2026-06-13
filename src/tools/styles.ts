@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { namespaceFor } from "../acss/prefixes.ts";
+import { classifyTokens } from "../acss/classify.ts";
 import { toolError } from "../errors.ts";
 import { envelope, registerTool, runRead, runWrite, type ToolContext } from "../tool-kit.ts";
 
@@ -125,35 +125,9 @@ export function registerStyleTools(server: McpServer, ctx: ToolContext): void {
         string
       >;
       const computed = await ctx.bridge.readRootVariables();
-      type Token = {
-        name: string;
-        value: string;
-        source: "etch" | "computed";
-        classification: "acss" | "etch" | "custom";
-        namespace?: string;
-        stylesheetHref?: string | null;
-      };
-      const tokens = new Map<string, Token>();
-      for (const v of computed) {
-        const isAcss = v.stylesheetHref
-          ? ctx.config.acssStylesheetPattern.test(v.stylesheetHref)
-          : false;
-        tokens.set(v.name, {
-          name: v.name,
-          value: v.value,
-          source: "computed",
-          classification: isAcss ? "acss" : "custom",
-          namespace: isAcss ? namespaceFor(v.name) : undefined,
-          stylesheetHref: v.stylesheetHref,
-        });
-      }
-      for (const [name, value] of Object.entries(registry)) {
-        tokens.set(name, { name, value, source: "etch", classification: "etch" });
-      }
+      const tokens = classifyTokens(computed, registry, ctx.config.acssStylesheetPattern);
       const filter = (args.filter as string) ?? "all";
-      const result = [...tokens.values()].filter(
-        (t) => filter === "all" || t.classification === filter,
-      );
+      const result = tokens.filter((t) => filter === "all" || t.classification === filter);
       return envelope(ctx, result);
     },
   );

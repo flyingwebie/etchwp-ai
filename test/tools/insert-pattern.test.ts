@@ -95,4 +95,68 @@ describe("etch_insert_pattern", () => {
     expect(out.result.unstyledClasses).toEqual(["unstyled"]);
     expect(out.result.attachments).toEqual([]);
   });
+
+  test("bemLint=reject on a bad class fails with E_ACSS_ENFORCEMENT and ZERO bridge calls", async () => {
+    const b = rigged();
+    const client = await connectedClient(b, { ETCH_BEM_LINT: "reject" });
+    const out = await call(client, "etch_insert_pattern", {
+      html: `<section class="Bad__X">hi</section>`,
+      css: "",
+    });
+    expect(out.ok).toBe(false);
+    expect(out.error.code).toBe("E_ACSS_ENFORCEMENT");
+    expect(b.calls.length).toBe(0);
+  });
+
+  test("enforceTokens=reject on a hardcoded value fails with ZERO bridge calls", async () => {
+    const b = rigged();
+    const client = await connectedClient(b, { ETCH_ENFORCE_TOKENS: "reject" });
+    const out = await call(client, "etch_insert_pattern", {
+      html: `<section class="hero">hi</section>`,
+      css: `.hero { padding: 20px; }`,
+    });
+    expect(out.ok).toBe(false);
+    expect(out.error.code).toBe("E_ACSS_ENFORCEMENT");
+    expect(out.error.message).toContain("padding");
+    expect(b.calls.length).toBe(0);
+  });
+
+  test("warn mode: manifest carries findings with exact resolvedTokens from the live page", async () => {
+    const ACSS = "https://site.com/wp-content/uploads/automatic-css/automatic.css";
+    const b = new MockBridge({
+      rootVariables: [{ name: "--space-m", value: "20px", stylesheetHref: ACSS }],
+    });
+    let styleN = 0;
+    b.setHandler("styles", "create", () => `style-${++styleN}`);
+    b.setHandler("blocks", "create", () => "root-1");
+    b.setHandler("blocks", "getJson", () => ({ id: "root-1", type: "etch/element", children: [] }));
+    b.setHandler("blocks", "addClass", () => undefined);
+    const client = await connectedClient(b);
+    const out = await call(client, "etch_insert_pattern", {
+      html: `<section class="hero">hi</section>`,
+      css: `.hero { padding: 20px; }`,
+    });
+    expect(out.ok).toBe(true);
+    expect(out.result.enforcement).toEqual({ tokens: "warn", bem: "warn" });
+    const finding = out.result.tokenFindings.find((f: any) => f.property === "padding");
+    expect(finding.resolvedTokens).toEqual(["--space-m"]);
+  });
+
+  test("warn mode degrades gracefully when the live token read fails", async () => {
+    const b = rigged();
+    b.setHandler("styles", "listVariables", () => {
+      const e = new Error("boom") as Error & { code: string };
+      e.code = "OPERATION_FAILED";
+      throw e;
+    });
+    const client = await connectedClient(b);
+    const out = await call(client, "etch_insert_pattern", {
+      html: `<section class="hero">hi</section>`,
+      css: `.hero { padding: 20px; }`,
+    });
+    expect(out.ok).toBe(true); // insert still succeeds
+    const finding = out.result.tokenFindings.find((f: any) => f.property === "padding");
+    expect(finding.resolvedTokens).toBeUndefined(); // fell back to static suggestion
+    expect(finding.suggestion).toContain("--space");
+  });
 });
