@@ -100,9 +100,27 @@ In that Chrome window, log into WordPress and open the page you want to edit **i
 > ```sh
 > git clone https://github.com/flyingweb/etchwp-ai && cd etchwp-ai
 > bun install && bun run build
+> pwd   # note this absolute path — you'll point your client at <path>/dist/index.js
 > ```
-> …then everywhere below replace `"command": "npx", "args": ["-y", "etchwp-ai"]` with
-> `"command": "node", "args": ["/absolute/path/to/etchwp-ai/dist/index.js"]`.
+> Then everywhere below replace `"command": "npx", "args": ["-y", "etchwp-ai"]` with
+> `"command": "node", "args": ["/absolute/path/to/etchwp-ai/dist/index.js"]`. A full
+> from-source entry with an env var (the `node` equivalent of the Claude Desktop block below):
+> ```json
+> {
+>   "mcpServers": {
+>     "etchwp-ai": {
+>       "command": "node",
+>       "args": ["/absolute/path/to/etchwp-ai/dist/index.js"],
+>       "env": { "ETCH_TAB_URL_HINT": "mysite.com" }
+>     }
+>   }
+> }
+> ```
+> The dist path doesn't change when you rebuild (`bun run build` overwrites the same file).
+> In Claude Desktop / Cursor (GUI apps), `"command": "node"` can fail with `spawn node ENOENT`
+> if Node was installed via nvm/Homebrew — use the absolute path from `which node`
+> (e.g. `/Users/you/.nvm/versions/node/v22.21.0/bin/node`). Claude Code's CLI inherits your
+> shell PATH, so a bare `node` is fine there.
 
 **Claude Code**
 ```sh
@@ -132,16 +150,24 @@ Fully quit and restart Claude Desktop afterwards; the tools appear under the too
 ```json
 {
   "mcpServers": {
-    "etchwp-ai": { "command": "npx", "args": ["-y", "etchwp-ai"] }
+    "etchwp-ai": {
+      "command": "npx",
+      "args": ["-y", "etchwp-ai"],
+      "env": { "ETCH_TAB_URL_HINT": "mysite.com" }
+    }
   }
 }
 ```
 
-**OpenCode** — add to `opencode.json`:
+**OpenCode** — add to `opencode.json` (note: OpenCode uses `environment`, not `env`):
 ```json
 {
   "mcp": {
-    "etchwp-ai": { "type": "local", "command": ["npx", "-y", "etchwp-ai"] }
+    "etchwp-ai": {
+      "type": "local",
+      "command": ["npx", "-y", "etchwp-ai"],
+      "environment": { "ETCH_TAB_URL_HINT": "mysite.com" }
+    }
   }
 }
 ```
