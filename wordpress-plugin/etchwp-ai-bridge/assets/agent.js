@@ -143,6 +143,65 @@
 		}
 	}
 
+	// --- connection state: editor badge + server heartbeat -------------------
+	var state = 'idle';
+	var badgeEl = null;
+
+	function ensureBadge() {
+		if (!CFG.showBadge || badgeEl) return;
+		badgeEl = document.createElement('div');
+		badgeEl.id = 'etchwp-ai-badge';
+		badgeEl.style.cssText = [
+			'position:fixed', 'bottom:14px', 'right:14px', 'z-index:2147483647',
+			'display:flex', 'align-items:center', 'gap:7px',
+			'padding:6px 11px', 'border-radius:999px',
+			'font:600 12px/1 -apple-system,Segoe UI,Roboto,sans-serif',
+			'color:#fff', 'background:#3c434a', 'box-shadow:0 2px 8px rgba(0,0,0,.25)',
+			'pointer-events:none', 'opacity:0', 'transition:opacity .3s'
+		].join(';');
+		badgeEl.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#b0b0b8;display:inline-block"></span><span class="etchwp-badge-text"></span>';
+		var add = function () { (document.body || document.documentElement).appendChild(badgeEl); };
+		if (document.body) add(); else document.addEventListener('DOMContentLoaded', add);
+	}
+
+	function renderBadge() {
+		if (!badgeEl) return;
+		var map = {
+			connected: ['#00a32a', 'etchwp-ai connected'],
+			connecting: ['#dba617', 'etchwp-ai connecting…'],
+			disconnected: ['#d63638', 'etchwp-ai disconnected']
+		};
+		var info = map[state] || ['#b0b0b8', 'etchwp-ai'];
+		badgeEl.querySelector('span').style.background = info[0];
+		badgeEl.querySelector('.etchwp-badge-text').textContent = info[1];
+		badgeEl.style.opacity = state === 'idle' ? '0' : '1';
+	}
+
+	function heartbeat() {
+		if (!CFG.ajaxUrl || !CFG.nonce) return;
+		var body = new URLSearchParams();
+		body.set('action', 'etchwp_ai_bridge_heartbeat');
+		body.set('nonce', CFG.nonce);
+		body.set('state', state);
+		body.set('mode', CFG.mode || 'relay');
+		body.set('endpoint', endpoint());
+		body.set('room', CFG.room || '');
+		body.set('hasEtch', isAvailable() ? '1' : '');
+		body.set('etchVersion', (window.etch && window.etch.version) || '');
+		body.set('url', location.href);
+		try { fetch(CFG.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body, keepalive: true }); } catch (e) {}
+	}
+
+	function setState(next) {
+		if (state === next) return;
+		state = next;
+		ensureBadge();
+		renderBadge();
+		heartbeat();
+	}
+	// Keep the server status fresh while connected.
+	setInterval(function () { if (state === 'connected') heartbeat(); }, 10000);
+
 	function sendHello() {
 		send({
 			t: 'hello',
@@ -158,7 +217,8 @@
 	function connect() {
 		var url = endpoint();
 		if (!url) return; // misconfigured; nothing to do
-		try { ws = new WebSocket(url); } catch (e) { scheduleReconnect(); return; }
+		setState('connecting');
+		try { ws = new WebSocket(url); } catch (e) { setState('disconnected'); scheduleReconnect(); return; }
 
 		ws.onopen = function () {
 			backoff = 1000;
@@ -166,13 +226,14 @@
 				send({ t: 'join', role: 'agent', room: CFG.room || 'default', token: CFG.token || undefined });
 			}
 			sendHello();
+			setState('connected');
 		};
 		ws.onmessage = function (ev) {
 			var frame;
 			try { frame = JSON.parse(ev.data); } catch (e) { return; }
 			if (frame && frame.t === 'call') handleCall(frame);
 		};
-		ws.onclose = function () { scheduleReconnect(); };
+		ws.onclose = function () { setState('disconnected'); scheduleReconnect(); };
 		ws.onerror = function () { try { ws.close(); } catch (e) {} };
 	}
 
