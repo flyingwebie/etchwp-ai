@@ -1,0 +1,67 @@
+name: Plugin release
+
+# Builds the installable WordPress plugin .zip (etchwp-ai-bridge) and attaches it
+# to the GitHub Release. The plugin is plain PHP + JS — no build step needed, so
+# the zip is self-contained and users install it via Plugins → Add New → Upload.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to stamp (without leading v), e.g. 0.1.0"
+        required: false
+        default: "0.0.0-dev"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building etchwp-ai-bridge $VERSION"
+
+      - name: Stage plugin
+        run: |
+          SRC="wordpress-plugin/etchwp-ai-bridge"
+          OUT="build/etchwp-ai-bridge"
+          mkdir -p "$OUT"
+          cp -R "$SRC"/. "$OUT"/
+          # Stamp the resolved version into the plugin header and readme.
+          sed -i -E "s/^( \* Version: +).*/\1${{ steps.ver.outputs.version }}/" "$OUT/etchwp-ai-bridge.php"
+          sed -i -E "s/(define\( 'ETCHWP_AI_BRIDGE_VERSION', ')[^']*(' \);)/\1${{ steps.ver.outputs.version }}\2/" "$OUT/etchwp-ai-bridge.php"
+          sed -i -E "s/^(Stable tag: ).*/\1${{ steps.ver.outputs.version }}/" "$OUT/readme.txt"
+
+      - name: Zip
+        run: |
+          cd build
+          zip -r ../etchwp-ai-bridge.zip etchwp-ai-bridge
+          cd ..
+          unzip -l etchwp-ai-bridge.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: etchwp-ai-bridge
+          path: etchwp-ai-bridge.zip
+
+      - name: Attach to release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: etchwp-ai-bridge.zip
