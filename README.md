@@ -246,9 +246,11 @@ See [relay/README.md](relay/README.md) for a Caddy/nginx snippet. Give each site
 
 #### C. Configure both sides — they must match
 
-In WP Admin: **Settings → etchwp-ai Bridge**. Set the **Mode** and a long random **token**,
-plus the **Relay URL + Room** (relay) or **Host/Port + wss** (direct). Then set the same
-values as MCP server env vars:
+In WP Admin: **Settings → etchwp-ai Bridge**. Pick the **Mode** (the page shows only that
+mode's fields), click **Generate** for a strong **Shared token**, and fill the **Relay URL +
+Room** (relay) or **Host/Port + wss** (direct). The page builds a copy-paste **MCP server
+environment** block from your entries, and a **live status panel** turns green once the
+in-page agent connects. Set the same values as MCP server env vars:
 
 | Variable | Default | Purpose |
 | -------- | ------- | ------- |
@@ -284,9 +286,10 @@ A Claude Desktop config block for **relay** mode (the `node`-from-source form; a
 #### D. Use it
 
 Open your page in the **Etch builder** (logged in normally — no debug-flag Chrome needed).
-The agent connects automatically. In Direct mode, accept the one-time Chrome Local Network
-Access prompt. Then jump to Step 5 — `etch_status` should return live builder state through
-the plugin.
+The agent connects automatically — a small **● etchwp-ai connected** badge appears in the
+editor and the settings **status panel** flips to *Agent connected*. In Direct mode, accept
+the one-time Chrome Local Network Access prompt. Then jump to Step 5 — `etch_status` should
+return live builder state through the plugin.
 
 ### Step 5 — Verify it works
 
