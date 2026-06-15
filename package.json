@@ -1,12 +1,55 @@
 {
   "name": "etchwp-ai",
-  "module": "index.ts",
   "type": "module",
-  "private": true,
+  "private": false,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@biomejs/biome": "^2.4.16",
+    "@digital-gravy/etch-public-api": "^0.3.4",
+    "@types/bun": "latest",
+    "@types/css-tree": "^2.3.11",
+    "domhandler": "^6.0.1",
+    "typescript": "^6.0.3"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "css-tree": "^3.2.1",
+    "htmlparser2": "^12.0.0",
+    "playwright-core": "^1.60.0",
+    "zod": "^4.4.3"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "test": "bun test",
+    "dev": "bun --hot src/index.ts",
+    "build": "bun build src/index.ts --target=node --outdir dist --packages external",
+    "export:tokens": "bun run scripts/export-tokens.ts",
+    "prepublishOnly": "bun run build"
+  },
+  "license": "MIT",
+  "version": "0.1.0",
+  "description": "MCP server that drives the Etch for WordPress builder via CDP (window.etch Public API)",
+  "bin": {
+    "etchwp-ai": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flyingweb/etchwp-ai.git"
+  },
+  "keywords": [
+    "etch",
+    "wordpress",
+    "mcp",
+    "automaticcss",
+    "ai"
+  ]
 }
