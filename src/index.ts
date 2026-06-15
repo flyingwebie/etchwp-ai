@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CdpBridge } from "./bridge/cdp.ts";
+import type { EtchBridge } from "./bridge/types.ts";
+import { WsBridge } from "./bridge/ws.ts";
 import { loadConfig } from "./config.ts";
 import { buildServer } from "./server.ts";
 
 async function main() {
   const config = loadConfig();
-  const bridge = new CdpBridge(config);
+  const bridge: EtchBridge =
+    config.transport === "ws" ? new WsBridge(config) : new CdpBridge(config);
+  console.error(
+    `[etchwp-ai] info: transport=${config.transport}${
+      config.transport === "ws" ? ` (ws mode=${config.ws.mode})` : ""
+    }.`,
+  );
   const { server, ctx } = buildServer({ bridge, config });
 
   const warnIfDirty = () => {

@@ -185,13 +185,33 @@ Everything is environment variables — set them in your MCP client's `env` bloc
 
 | Variable | Default | Purpose |
 | -------- | ------- | ------- |
-| `ETCH_CDP_URL` | `http://localhost:9222` | Chrome debug endpoint |
+| `ETCH_TRANSPORT` | `cdp` | `cdp` (Chrome debug port) or `ws` (WebSocket via the WordPress plugin — see below) |
+| `ETCH_CDP_URL` | `http://localhost:9222` | Chrome debug endpoint (CDP transport) |
 | `ETCH_TAB_URL_HINT` | — | Case-insensitive URL substring to pick the builder tab when several are open |
 | `ETCH_CALL_TIMEOUT_MS` | `15000` | Per-call timeout |
 | `ETCH_MAX_READ_BYTES` | `100000` | Tree-read size guard (past it, use `depth` / `mode: "summary"`) |
 | `ETCH_ACSS_STYLESHEET_PATTERN` | `automatic-?css` | Regex classifying a token's stylesheet origin as AutomaticCSS |
 | `WP_BASE_URL` + `WP_APP_USER` + `WP_APP_PASSWORD` | — | All three together enable the `wp_media` / `wp_content` sidecar |
 | `ETCH_LOG_LEVEL` | `info` | stderr log level (stdout is the MCP channel) |
+
+#### WebSocket transport (`ETCH_TRANSPORT=ws`)
+
+An alternative to CDP that needs **no Chrome flags**: install the **etchwp-ai Bridge**
+WordPress plugin (`wordpress-plugin/etchwp-ai-bridge`), which injects an in-page agent into
+the Etch editor and relays the same `window.etch` API over a WebSocket. Works in any
+browser, scoped to the Etch tab.
+
+| Variable | Default | Purpose |
+| -------- | ------- | ------- |
+| `ETCH_WS_MODE` | `relay` | `relay` (both peers dial a shared `wss://` broker — recommended for online sites, no Chrome prompt) or `direct` (MCP hosts a loopback `ws(s)` server; Chrome 147+ shows a one-time Local Network Access prompt) |
+| `ETCH_WS_RELAY_URL` | — | relay mode: `wss://` URL of the broker (`relay/` — run with Bun) |
+| `ETCH_WS_ROOM` | `default` | relay mode: room id pairing this server with its in-page agent |
+| `ETCH_WS_TOKEN` | — | shared secret the agent must present (both modes) |
+| `ETCH_WS_PORT` | `9223` | direct mode: loopback server port |
+| `ETCH_WS_CERT` + `ETCH_WS_KEY` | — | direct mode: TLS cert/key paths for `wss` |
+
+The plugin's **Settings → etchwp-ai Bridge** values must match these. `etch_screenshot` is
+unavailable over this transport (it needs CDP). See `relay/README.md` for relay deployment.
 
 ### Step 5 — Verify it works
 
@@ -333,7 +353,7 @@ More docs: [docs/bridge.md](docs/bridge.md) · [docs/server.md](docs/server.md) 
 ## Roadmap (v2)
 
 - ACSS-opinionated generation: token-enforced CSS, utility suggestions, BEM lint
-- WordPress-plugin/WebSocket transport (no Chrome flags needed)
+- ✅ WordPress-plugin/WebSocket transport (no Chrome flags needed) — see `ETCH_TRANSPORT=ws` above
 - Streamable HTTP transport, multi-session
 - Watch upstream: `etch.connect?()` reserved official transport
 

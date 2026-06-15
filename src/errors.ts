@@ -27,6 +27,14 @@ export const ERROR_REMEDIATIONS: Record<string, string> = {
   E_FEATURE_MISSING:
     "This Etch install does not expose that API method (the 0.x contract varies). Check etch_status.featureMap for what is available.",
   E_VALIDATION: "The input was rejected before reaching Etch. Fix the arguments per the message.",
+  E_NO_AGENT:
+    "No in-page agent connected over the WebSocket transport. Open the Etch builder in a browser with the etchwp-ai-bridge plugin active, and confirm the plugin's relay/host + room + token match the server's ETCH_WS_* env. In relay mode also check the relay is reachable.",
+  E_WS_CONFIG:
+    "WebSocket transport is misconfigured. In relay mode set ETCH_WS_RELAY_URL (and matching ETCH_WS_ROOM/ETCH_WS_TOKEN); in direct mode set ETCH_WS_PORT (and ETCH_WS_CERT/ETCH_WS_KEY for wss).",
+  E_WS_RELAY:
+    "Could not reach the WebSocket relay. Check ETCH_WS_RELAY_URL is a reachable wss:// endpoint and the relay service is running.",
+  E_UNSUPPORTED:
+    "This operation is not available over the WebSocket transport (e.g. screenshots need CDP). Use ETCH_TRANSPORT=cdp for it, or omit the call.",
   E_PATTERN_PARTIAL:
     "Pattern insertion stopped mid-way leaving a partial subtree in the buffer. Run etch_history rollback to revert to the auto checkpoint, or finish manually.",
   E_ACSS_ENFORCEMENT:
