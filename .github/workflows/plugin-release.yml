@@ -8,6 +8,10 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - "wordpress-plugin/**"
+      - ".github/workflows/plugin-release.yml"
   workflow_dispatch:
     inputs:
       version:
@@ -30,9 +34,12 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             VERSION="${GITHUB_REF_NAME#v}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            VERSION="0.0.0-pr${{ github.event.pull_request.number }}"
           else
             VERSION="${{ github.event.inputs.version }}"
           fi
+          VERSION="${VERSION:-0.0.0-dev}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building etchwp-ai-bridge $VERSION"
 
